@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "146420614697",
+    "project_id": "appwanderlog",
+    "storage_bucket": "appwanderlog.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:146420614697:android:47cf4b31096dfc0b8e7e38",
+        "android_client_info": {
+          "package_name": "com.example.wanderlogapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBck64P6e2BEYiyggGRrekvZP-EQ4lJ92U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
