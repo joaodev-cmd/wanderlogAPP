@@ -12,6 +12,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WanderlogAPP"
         tools:targetApi="31">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyA4yJV8YiMX3TbTcFUIntEbr_AWf-Ib3FY"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
