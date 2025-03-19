@@ -35,14 +35,18 @@ fun EditarViagemScreen(navController: NavController, viagemId: String?) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Campo de texto para o local
         TextField(value = local, onValueChange = { local = it }, label = { Text("Local") })
         Spacer(modifier = Modifier.height(8.dp))
+
+        // Campo de texto para o comentário
         TextField(value = comentario, onValueChange = { comentario = it }, label = { Text("Comentário") })
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Botão para salvar ou adicionar viagem
         Button(onClick = {
-            val viagem = Viagem(id = viagemId ?: "", local = local, comentario = comentario)
+            val viagem = Viagem(id = viagemId ?: "", local = local, comentario = comentario)  // Não inclui imagens
 
             if (isEditing) {
                 viagemDAO.atualizarViagem(viagem, { navController.popBackStack() }, { /* Tratar erro */ })
@@ -53,6 +57,7 @@ fun EditarViagemScreen(navController: NavController, viagemId: String?) {
             Text(if (isEditing) "Salvar" else "Adicionar")
         }
 
+        // Se for edição, mostrar o botão de deletar
         if (isEditing) {
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {

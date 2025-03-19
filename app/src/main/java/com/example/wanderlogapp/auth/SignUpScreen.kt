@@ -13,6 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.wanderlogapp.data.registerUser
 
-
+// Função para validar o formato do email
 fun isValidEmail(email: String): Boolean {
     val emailPattern = "[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
     return email.matches(emailPattern.toRegex())
@@ -120,7 +121,7 @@ fun SignUpScreen(navController: NavController) {
                             navController.navigate("loginScreen") // Navega para a tela de login após o cadastro
                         }, { error ->
                             isLoading = false
-                            // Exibir erro para o usuário
+                            errorMessage = "Registration failed: $error" // Exibir erro para o usuário
                         })
                     }
                 } else {
@@ -136,10 +137,19 @@ fun SignUpScreen(navController: NavController) {
                 Text("Sign Up")
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Botão de voltar para o login
+        TextButton(onClick = {
+            navController.navigate("loginScreen") // Navega de volta para a tela de login
+        }) {
+            Text("Already have an account? Login")
+        }
     }
 }
 
-
+// Função para validar os campos
 fun validateInput(username: String, email: String, password: String, confirmPassword: String): Boolean {
     if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
         return false
