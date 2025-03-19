@@ -9,7 +9,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.wanderlogapp.ui.theme.WanderlogAPPTheme
 import com.example.wanderlogapp.auth.LoginScreen
 import com.example.wanderlogapp.auth.SignUpScreen
-import com.example.wanderlogapp.views.MyTripsScreen
+import com.example.wanderlogapp.views.EditarViagemScreen
+import com.example.wanderlogapp.views.MinhasViagensScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,17 +22,12 @@ class MainActivity : ComponentActivity() {
 
                 // Criação do NavHost
                 NavHost(navController = navController, startDestination = "loginScreen") {
-                    // Composable para a tela de login
-                    composable("loginScreen") {
-                        LoginScreen(navController)
-                    }
-                    // Composable para a tela de cadastro
-                    composable("signUpScreen") {
-                        SignUpScreen(navController)
-                    }
-                    // Composable para a tela principal (HomeScreen)
-                    composable("homeScreen") {
-                        MyTripsScreen(navController) // Redireciona para a tela de "Minhas Viagens"
+                    composable("loginScreen") { LoginScreen(navController) }
+                    composable("signUpScreen") { SignUpScreen(navController) }
+                    composable("homeScreen") { MinhasViagensScreen(navController) }
+                    composable("editarViagemScreen/{viagemId}") { backStackEntry ->
+                        val viagemId = backStackEntry.arguments?.getString("viagemId")
+                        EditarViagemScreen(navController, viagemId)
                     }
                 }
             }
