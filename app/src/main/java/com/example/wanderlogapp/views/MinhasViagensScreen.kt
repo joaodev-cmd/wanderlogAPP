@@ -1,5 +1,6 @@
 package com.example.wanderlogapp.views
 
+import android.R.attr.onClick
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -134,6 +135,17 @@ fun MinhasViagensScreen(navController: NavController) {
                 .padding(16.dp)
         ) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "Adicionar Viagem")
+        }
+
+        FloatingActionButton(
+            onClick = {
+                navController.navigate("mapsScreen") // Navega para a tela de mapas
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
+            Icon(imageVector = Icons.Default.Add, contentDescription = "Visualizar mapa")
         }
 
         if (showDeleteDialog && viagemToDelete != null) {

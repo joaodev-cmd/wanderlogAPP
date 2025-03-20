@@ -1,66 +1,86 @@
 package com.example.wanderlogapp.views
 
-import android.annotation.SuppressLint
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import com.google.android.gms.maps.model.CameraPosition
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.maps.android.compose.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import java.io.IOException
 
-class MapsActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MapsScreen()
+@Composable
+fun MapsScreen(viewModel: MapsViewModel = viewModel()) {
+    val cameraPositionState = rememberCameraPositionState()
+    val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = false)) }
+    val properties by remember { mutableStateOf(MapProperties(isMyLocationEnabled = true)) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        GoogleMap(
+            modifier = Modifier.weight(1f),
+            cameraPositionState = cameraPositionState,
+            properties = properties,
+            uiSettings = uiSettings,
+            onMapLoaded = {
+                viewModel.fetchLocation()
+            }
+        ) {
+            viewModel.location?.let { latLng ->
+                Marker(
+                    state = MarkerState(position = latLng),
+                    title = "Localização",
+                    snippet = "Marcador no local"
+                )
+            }
+        }
+
+        Button(onClick = { viewModel.fetchLocation() }) {
+            Text(text = "Buscar Localização")
         }
     }
 }
 
-@SuppressLint("MissingPermission")
-@Composable
-fun MapsScreen() {
-    val firestore = FirebaseFirestore.getInstance()
-    var markers by remember { mutableStateOf(emptyList<LatLng>()) }
+class MapsViewModel : androidx.lifecycle.ViewModel() {
+    private val apiKey = "SUA_CHAVE_API"
+    var location by mutableStateOf<LatLng?>(null)
 
-    // Buscar locais do Firebase Firestore
-    LaunchedEffect(Unit) {
-        firestore.collection("pins")
-            .get()
-            .addOnSuccessListener { documents ->
-                markers = documents.mapNotNull { doc ->
-                    val lat = doc.getDouble("latitude")
-                    val lng = doc.getDouble("longitude")
-                    if (lat != null && lng != null) LatLng(lat, lng) else null
-                }
-            }
-    }
+    suspend fun getLatLngFromLocationName(locationName: String): LatLng? {
+        val client = OkHttpClient()
+        val url = "https://maps.googleapis.com/maps/api/geocode/json?address=$locationName&key=$apiKey"
 
-    // Configuração do Mapa
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(-15.8267, -47.9218), 12f) // Exemplo: Brasília
-    }
+        val request = Request.Builder().url(url).build()
 
-    GoogleMap(
-        modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState,
-        properties = MapProperties(isMyLocationEnabled = true)
-    ) {
-        markers.forEach { location ->
-            Marker(state = MarkerState(position = location), title = "Local Salvo")
+        return try {
+            val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+            if (response.isSuccessful) {
+                val jsonResponse = response.body?.string()
+                val jsonObject = JSONObject(jsonResponse)
+                val results = jsonObject.getJSONArray("results")
+                if (results.length() > 0) {
+                    val geometry = results.getJSONObject(0).getJSONObject("geometry")
+                    val location = geometry.getJSONObject("location")
+                    val lat = location.getDouble("lat")
+                    val lng = location.getDouble("lng")
+                    LatLng(lat, lng)
+                } else null
+            } else null
+        } catch (e: IOException) {
+            Log.e("MapsViewModel", "Erro ao buscar geocodificação: ${e.message}")
+            null
         }
+    }
+
+    fun fetchLocation() {
+        location = LatLng(-15.7801, -47.9292) // Ponto inicial (Brasília)
     }
 }
