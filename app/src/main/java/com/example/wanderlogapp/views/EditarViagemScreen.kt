@@ -37,6 +37,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.wanderlogapp.data.Viagem
 import com.example.wanderlogapp.data.ViagemDAO
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import java.util.UUID
 
@@ -67,9 +68,18 @@ fun EditarViagemScreen(navController: NavController, viagemId: String?) {
                     }
                 },
                 onFailure = {
-                    // Removido erroBusca, pois não estamos mais exibindo essa mensagem
+
                 }
             )
+        }
+
+        // Observar o estado salvo para a localização
+        navController.currentBackStackEntry?.savedStateHandle?.getLiveData<LatLng>("selectedLocation")?.observeForever { selectedLatLng ->
+            if (selectedLatLng != null) {
+                // Atualiza as variáveis de latitude e longitude
+                latitude = selectedLatLng.latitude
+                longitude = selectedLatLng.longitude
+            }
         }
     }
 
@@ -103,7 +113,7 @@ fun EditarViagemScreen(navController: NavController, viagemId: String?) {
 
             // Botão para navegar até a tela de mapas
             Button(
-                onClick = { navController.navigate("maps_screen") },
+                onClick = { navController.navigate("mapsScreen") },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Escolher Local no Mapa")
