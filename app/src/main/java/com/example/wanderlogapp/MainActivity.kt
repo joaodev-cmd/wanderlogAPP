@@ -11,6 +11,7 @@ import com.example.wanderlogapp.auth.LoginScreen
 import com.example.wanderlogapp.auth.SignUpScreen
 import com.example.wanderlogapp.views.EditarViagemScreen
 import com.example.wanderlogapp.views.MinhasViagensScreen
+import com.example.wanderlogapp.views.MapsScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
                         val viagemId = backStackEntry.arguments?.getString("viagemId")
                         EditarViagemScreen(navController, viagemId)
                     }
+                    composable("mapsScreen") { MapsScreen(navController) } // Adicionando a tela de Maps
                 }
             }
         }

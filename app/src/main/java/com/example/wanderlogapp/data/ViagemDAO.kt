@@ -35,4 +35,16 @@ class ViagemDAO {
             }
             .addOnFailureListener { onFailure(it) }
     }
+    fun salvarViagem(viagem: Viagem, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        val viagemRef = db.collection("viagens").document(viagem.id)
+
+        viagemRef.set(viagem)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { exception ->
+                onFailure(exception)
+            }
+    }
 }
