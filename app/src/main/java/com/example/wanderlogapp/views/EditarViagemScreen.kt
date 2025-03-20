@@ -18,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +37,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.wanderlogapp.data.Viagem
 import com.example.wanderlogapp.data.ViagemDAO
+import com.google.firebase.auth.FirebaseAuth
 import java.util.UUID
 
 @Composable
@@ -48,35 +48,29 @@ fun EditarViagemScreen(navController: NavController, viagemId: String?) {
     var imagens by remember { mutableStateOf<List<String>>(emptyList()) }
     var latitude by remember { mutableDoubleStateOf(0.0) }
     var longitude by remember { mutableDoubleStateOf(0.0) }
-    var erroBusca by remember { mutableStateOf(false) } // Para erro de busca
 
-    val idViagem by remember { mutableStateOf(viagemId ?: UUID.randomUUID().toString()) }
+    // Gere o idViagem logo ao entrar na tela
+    val idViagem = remember { viagemId ?: UUID.randomUUID().toString() }
 
     // Buscar os dados da viagem se estiver editando
     LaunchedEffect(viagemId) {
         if (viagemId != null) {
-            viagemDAO.buscarViagens(
-                onSuccess = { viagens ->
-                    val viagemEncontrada = viagens.find { it.id == viagemId }
+            viagemDAO.buscarViagemPorId(
+                viagemId,
+                onSuccess = { viagemEncontrada ->
                     if (viagemEncontrada != null) {
                         local = viagemEncontrada.local
                         comentario = viagemEncontrada.comentario
                         imagens = viagemEncontrada.imagens
                         latitude = viagemEncontrada.latitude
                         longitude = viagemEncontrada.longitude
-                    } else {
-                        erroBusca = true // Viagem não encontrada
                     }
                 },
                 onFailure = {
-                    erroBusca = true // Falha ao buscar
+                    // Removido erroBusca, pois não estamos mais exibindo essa mensagem
                 }
             )
         }
-    }
-
-    if (erroBusca) {
-        Text(text = "Erro ao carregar os dados da viagem", color = androidx.compose.ui.graphics.Color.Red)
     }
 
     val imagePicker = rememberLauncherForActivityResult(
@@ -140,35 +134,21 @@ fun EditarViagemScreen(navController: NavController, viagemId: String?) {
 
             Button(
                 onClick = {
-                    val viagem = Viagem(idViagem, local, comentario, longitude, latitude, imagens)
-                    viagemDAO.salvarViagem(
-                        viagem = viagem,
-                        onSuccess = { navController.popBackStack() },
-                        onFailure = { /* Tratar erro ao salvar */ }
-                    )
+                    if (local.isNotBlank() && comentario.isNotBlank()) {
+                        val user = FirebaseAuth.getInstance().currentUser
+                        if (user != null) {
+                            val viagem = Viagem(idViagem, local, comentario, longitude, latitude, imagens, user.uid)
+                            viagemDAO.salvarViagem(
+                                viagem = viagem,
+                                onSuccess = { navController.popBackStack() },
+                                onFailure = { /* Tratar erro ao salvar */ }
+                            )
+                        }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Salvar")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (viagemId != null) {
-                Button(
-                    onClick = {
-                        viagemDAO.deletarViagem(viagemId, {
-                            navController.popBackStack()
-                        }, {
-                            // Tratar erro
-                        })
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Deletar Viagem")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Deletar Viagem")
-                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

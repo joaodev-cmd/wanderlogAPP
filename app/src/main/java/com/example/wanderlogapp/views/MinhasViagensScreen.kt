@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.wanderlogapp.data.Viagem
 import com.example.wanderlogapp.data.ViagemDAO
+import com.google.firebase.auth.FirebaseAuth
+import java.util.UUID
 
 @Composable
 fun MinhasViagensScreen(navController: NavController) {
@@ -44,21 +47,39 @@ fun MinhasViagensScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(true) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var viagemToDelete by remember { mutableStateOf<Viagem?>(null) }
+    var showUserInfoDialog by remember { mutableStateOf(false) }
+
+    val user = FirebaseAuth.getInstance().currentUser // Obtenha o usuário atual
+    val userName = user?.displayName ?: "Usuário"
+    val userEmail = user?.email ?: "E-mail não disponível"
 
     LaunchedEffect(Unit) {
-        viagemDAO.buscarViagens(
-            onSuccess = {
-                viagens = it
-                isLoading = false
-            },
-            onFailure = {
-                isLoading = false
-            }
-        )
+        val userId = user?.uid
+        if (userId != null) {
+            viagemDAO.buscarViagens(
+                userId = userId,  // Passando o userId para filtrar as viagens
+                onSuccess = {
+                    viagens = it
+                    isLoading = false
+                },
+                onFailure = {
+                    isLoading = false
+                }
+            )
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            // Botão de informações do usuário
+            IconButton(
+                onClick = { showUserInfoDialog = true },
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Icon(imageVector = Icons.Default.Person, contentDescription = "Informações do Usuário")
+            }
+
+            // Título da tela
             Text("Minhas Viagens", style = MaterialTheme.typography.titleLarge)
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -106,8 +127,7 @@ fun MinhasViagensScreen(navController: NavController) {
 
         FloatingActionButton(
             onClick = {
-                val viagemId = "123" // Aqui você pode pegar o id da viagem real
-                navController.navigate("editarViagemScreen/$viagemId")
+                navController.navigate("editarViagemScreen/${UUID.randomUUID()}")  // Gerar um novo ID para a criação da viagem
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -115,7 +135,6 @@ fun MinhasViagensScreen(navController: NavController) {
         ) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "Adicionar Viagem")
         }
-
 
         if (showDeleteDialog && viagemToDelete != null) {
             AlertDialog(
@@ -141,6 +160,42 @@ fun MinhasViagensScreen(navController: NavController) {
                 dismissButton = {
                     TextButton(onClick = { showDeleteDialog = false }) {
                         Text("Não")
+                    }
+                }
+            )
+        }
+
+        if (showUserInfoDialog) {
+            AlertDialog(
+                onDismissRequest = { showUserInfoDialog = false },
+                title = { Text("Informações do Usuário") },
+                text = {
+                    Column {
+                        Text("Nome: $userName")
+                        Text("E-mail: $userEmail")
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            // Realiza o logout
+                            FirebaseAuth.getInstance().signOut()
+
+                            // Navega para a tela de login e limpa a pilha de navegação
+                            navController.navigate("loginScreen") {
+                                popUpTo("homeScreen") { inclusive = true } // Remove a tela de home da pilha
+                            }
+
+                            // Fecha o dialog
+                            showUserInfoDialog = false
+                        }
+                    ) {
+                        Text("Sair")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showUserInfoDialog = false }) {
+                        Text("Fechar")
                     }
                 }
             )
