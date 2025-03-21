@@ -1,9 +1,12 @@
 package com.example.wanderlogapp.views
 
-import android.R.attr.onClick
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,8 +37,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.wanderlogapp.R
+import com.example.wanderlogapp.auth.Nohemi
 import com.example.wanderlogapp.data.Viagem
 import com.example.wanderlogapp.data.ViagemDAO
 import com.google.firebase.auth.FirebaseAuth
@@ -51,7 +58,6 @@ fun MinhasViagensScreen(navController: NavController) {
     var showUserInfoDialog by remember { mutableStateOf(false) }
 
     val user = FirebaseAuth.getInstance().currentUser // Obtenha o usuário atual
-    val userName = user?.displayName ?: "Usuário"
     val userEmail = user?.email ?: "E-mail não disponível"
 
     LaunchedEffect(Unit) {
@@ -71,52 +77,90 @@ fun MinhasViagensScreen(navController: NavController) {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            // Botão de informações do usuário
-            IconButton(
-                onClick = { showUserInfoDialog = true },
-                modifier = Modifier.padding(bottom = 16.dp)
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.White) // Cor de fundo branca
+            .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(imageVector = Icons.Default.Person, contentDescription = "Informações do Usuário")
-            }
+                // Removendo o fundo retangular da logo
+                Image(
+                    painter = painterResource(id = R.drawable.logowanderlog), // Logo menor
+                    contentDescription = "Logo",
+                    modifier = Modifier
+                        .height(40.dp) // Diminuindo o tamanho da logo
+                        .weight(0.6f) // Faz a logo usar o espaço disponível na linha
+                        .padding(end = 16.dp) // Espaçamento entre logo e ícone
+                )
 
-            // Título da tela
-            Text("Minhas Viagens", style = MaterialTheme.typography.titleLarge)
+                // Ícone de conta no canto
+                IconButton(onClick = { showUserInfoDialog = true }) {
+                    Icon(imageVector = Icons.Default.Person, contentDescription = "Informações do Usuário")
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Título "Minhas Viagens"
+            Text(
+                text = "Minhas Viagens",
+                style = MaterialTheme.typography.titleLarge.copy(fontFamily = Nohemi),
+                modifier = Modifier.padding(16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Lista de Viagens
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else {
-                LazyColumn {
-                    items(viagens) { viagem ->
-                        Card(
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 40.dp),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    items(viagens.chunked(2)) { viagensLinha ->
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                                .clickable { navController.navigate("editarViagemScreen/${viagem.id}") }
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(text = viagem.local, style = MaterialTheme.typography.titleMedium)
-                                Text(
-                                    text = viagem.comentario.take(100) + if (viagem.comentario.length > 100) "..." else "",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                            viagensLinha.forEach { viagem ->
+                                Card(
+                                    modifier = Modifier
+                                        .weight(1f) // Divide igualmente o espaço entre as colunas
+                                        .clickable { navController.navigate("editarViagemScreen/${viagem.id}") }
+                                ) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text(text = viagem.local, style = MaterialTheme.typography.titleMedium)
+                                        Text(
+                                            text = viagem.comentario.take(100) + if (viagem.comentario.length > 100) "..." else "",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
 
-                                Row {
-                                    IconButton(onClick = {
-                                        navController.navigate("editarViagemScreen/${viagem.id}")
-                                    }) {
-                                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar Viagem")
-                                    }
+                                        Row {
+                                            IconButton(onClick = {
+                                                navController.navigate("editarViagemScreen/${viagem.id}")
+                                            }) {
+                                                Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar Viagem")
+                                            }
 
-                                    IconButton(onClick = {
-                                        viagemToDelete = viagem
-                                        showDeleteDialog = true
-                                    }) {
-                                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Deletar Viagem")
+                                            IconButton(onClick = {
+                                                viagemToDelete = viagem
+                                                showDeleteDialog = true
+                                            }) {
+                                                Icon(imageVector = Icons.Default.Delete, contentDescription = "Deletar Viagem")
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -126,6 +170,7 @@ fun MinhasViagensScreen(navController: NavController) {
             }
         }
 
+        // Botão de adicionar viagem
         FloatingActionButton(
             onClick = {
                 navController.navigate("editarViagemScreen/${UUID.randomUUID()}")  // Gerar um novo ID para a criação da viagem
@@ -137,17 +182,7 @@ fun MinhasViagensScreen(navController: NavController) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "Adicionar Viagem")
         }
 
-        FloatingActionButton(
-            onClick = {
-                navController.navigate("mapsScreen") // Navega para a tela de mapas
-            },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(16.dp)
-        ) {
-            Icon(imageVector = Icons.Default.Add, contentDescription = "Visualizar mapa")
-        }
-
+        // Caixa de diálogo para deletar viagem
         if (showDeleteDialog && viagemToDelete != null) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
@@ -177,13 +212,13 @@ fun MinhasViagensScreen(navController: NavController) {
             )
         }
 
+        // Caixa de diálogo para informações do usuário
         if (showUserInfoDialog) {
             AlertDialog(
                 onDismissRequest = { showUserInfoDialog = false },
                 title = { Text("Informações do Usuário") },
                 text = {
                     Column {
-                        Text("Nome: $userName")
                         Text("E-mail: $userEmail")
                     }
                 },

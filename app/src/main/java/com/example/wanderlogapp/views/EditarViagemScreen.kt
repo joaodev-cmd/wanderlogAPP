@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,11 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -30,8 +33,10 @@ import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
@@ -94,6 +99,13 @@ fun EditarViagemScreen(navController: NavController, viagemId: String?) {
                 .padding(16.dp)
                 .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
+            // Barra de navegação com o ícone de voltar
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             OutlinedTextField(
                 value = local,
                 onValueChange = { local = it },
@@ -111,16 +123,32 @@ fun EditarViagemScreen(navController: NavController, viagemId: String?) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botão para navegar até a tela de mapas
+            // Exibir localização atual da viagem
+            if (latitude != 0.0 && longitude != 0.0) {
+                Text("Localização Atual: $latitude, $longitude")
+            }
+
+            val gradientBrush = Brush.horizontalGradient(
+                colors = listOf(Color(0xFF2E8B92), Color(0xFF22CFDC))
+            )
+
             Button(
                 onClick = { navController.navigate("mapsScreen") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)  // Adiciona padding de 16dp em cima e embaixo
+                    .background(gradientBrush)  // Aplica o gradiente no fundo do botão
+                    .clip(RoundedCornerShape(12.dp)),  // Arredonda as bordas
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent  // Deixa o botão transparente para o gradiente ser visível
+                )
             ) {
-                Text("Escolher Local no Mapa")
+                Text("Escolher Local no Mapa", color = Color.White)  // O texto será branco para destacar no fundo
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Exibindo as imagens da viagem
             LazyRow {
                 items(imagens) { imagemUri ->
                     Image(
@@ -136,11 +164,12 @@ fun EditarViagemScreen(navController: NavController, viagemId: String?) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Ícone para adicionar imagens
             IconButton(onClick = { imagePicker.launch("image/*") }) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Adicionar Imagem")
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.weight(1f)) // Isso empurra o botão de salvar para o final da tela
 
             Button(
                 onClick = {
@@ -156,19 +185,20 @@ fun EditarViagemScreen(navController: NavController, viagemId: String?) {
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)  // Adiciona padding de 16dp em cima e embaixo
+                    .background(gradientBrush)  // Aplica o gradiente no fundo do botão
+                    .clip(RoundedCornerShape(12.dp)),  // Aplica o arredondamento das bordas
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent  // Deixa o botão transparente para o gradiente ser visível
+                )
             ) {
-                Text("Salvar")
+                Text("Salvar", color = Color.White)  // O texto será branco para destacar no fundo
             }
+
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            IconButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier.align(Alignment.Start)
-            ) {
-                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
-            }
         }
     }
 }
